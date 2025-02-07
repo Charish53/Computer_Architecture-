@@ -1,20 +1,37 @@
+#define _GNU_SOURCE
 #include <stdio.h>
 #include <stdlib.h>
+#include <likwid.h> // Include LIKWID header
 
-#define N 5000
-#define M 100
+#define ROWS 5000
+#define COLS 100
 
-double x[N][M];
+double x[ROWS][COLS];
 
 void loop_interchange_optimized() {
-    for (int i = 0; i < N; i++) {
-        for (int j = 0; j < M; j++) {
-            x[i][j] = 2 * x[i][j]; // Sequential access improves locality
+    likwid_markerStartRegion("compute"); // Start LIKWID marker
+
+    for (int i = 0; i < ROWS; i++) { // Iterate row-wise for better cache locality
+        for (int j = 0; j < COLS; j++) {
+            x[i][j] = 2 * x[i][j];  // Process row elements in order
         }
     }
+
+    likwid_markerStopRegion("compute"); // Stop LIKWID marker
 }
 
 int main() {
-    loop_interchange_optimized();
+    likwid_markerInit(); // Initialize LIKWID marker API
+
+    // Initialize the array with sample values
+    for (int i = 0; i < ROWS; i++) {
+        for (int j = 0; j < COLS; j++) {
+            x[i][j] = (double)(i + j);
+        }
+    }
+
+    loop_interchange_optimized(); // Call the optimized function
+
+    likwid_markerClose(); // Close LIKWID marker API
     return 0;
 }
